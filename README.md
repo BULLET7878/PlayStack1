@@ -1,4 +1,4 @@
-# 🏌️‍♂️ Fairway Rewards: Play Your Game. Change Their World.
+# 🏌️‍♂️ Playstake: Play Your Game. Change Their World.
 
 [![React](https://img.shields.io/badge/Frontend-React%20%7C%20Vite-blue)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Backend-Node.js%20%7C%20Express-green)](https://nodejs.org/)
@@ -6,7 +6,7 @@
 [![Stripe](https://img.shields.io/badge/Payments-Stripe-626cd9)](https://stripe.com/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Fairway Rewards is a premium, full-stack golf reward platform that transforms every Stableford point into a force for good. Golfers can log their scores, enter tiered monthly draws for legendary prizes, and support life-changing charity causes—all within a cinematic, high-performance UI.
+Playstake is a premium, full-stack golf reward platform that transforms every Stableford point into a force for good. Golfers can log their scores, enter tiered monthly draws for legendary prizes, and support life-changing charity causes—all within a cinematic, high-performance UI.
 
 ---
 

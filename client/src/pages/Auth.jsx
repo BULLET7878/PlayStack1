@@ -23,11 +23,20 @@ const Auth = ({ isLogin = true }) => {
 
     const fetchCharities = async () => {
         try {
-            // We'll create this endpoint soon, for now let's mock or handle error
             const response = await api.get('/charities');
             setCharities(response.data);
+            
+            // If the database is completely empty (no rows) but tables exist, it returns []
+            // That's fine, but if it throws an error (tables don't exist), it hits catch
         } catch (err) {
-            console.error('Failed to fetch charities');
+            console.error('Failed to fetch charities', err);
+            // Catch the specific 'Could not find the table' error
+            const backendMsg = err.response?.data?.error || '';
+            if (backendMsg.includes('Could not find the table')) {
+                setError("CRITICAL ERROR: Your Database is Empty! You MUST copy the code inside database/schema.sql and run it in your Supabase SQL Editor, otherwise you cannot create an account!");
+            } else {
+                setError("Failed to connect to the database. Make sure your server is running!");
+            }
         }
     };
 

@@ -59,9 +59,37 @@ const Dashboard = () => {
     const handleSubscribe = async () => {
         try {
             const res = await api.post('/subscriptions/checkout', { plan_type: 'monthly' });
-            window.location.href = res.data.url;
+            
+            const options = {
+                key: res.data.key, // Your Razorpay test key from the backend
+                subscription_id: res.data.subscription_id,
+                name: "Playstake",
+                description: "Monthly Premium Membership",
+                handler: function (response) {
+                    // Payment successful! Let's refresh data to show 'ACTIVE'
+                    fetchDashboardData();
+                    alert("Payment Successful! Welcome to Playstake.");
+                },
+                prefill: {
+                    name: user?.full_name || "",
+                    email: user?.email || "",
+                    contact: "9999999999" // Dummy checkout number
+                },
+                theme: {
+                    color: "#18181b" // Matches project dark theme
+                }
+            };
+
+            const rzp = new window.Razorpay(options);
+            
+            rzp.on('payment.failed', function (response){
+                setError(`Payment Failed: ${response.error.description}`);
+            });
+
+            rzp.open();
         } catch (err) {
-            setError('Failed to initiate checkout');
+            setError('Failed to initiate checkout. Is your backend running?');
+            console.error(err);
         }
     };
 

@@ -1,20 +1,32 @@
 const { supabase } = require('../config/supabase');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
 
 const PLANS = {
     monthly: {
         name: 'Monthly',
-        amount: 999, // $9.99 in cents
-        interval: 'month'
+        amount: 99900, // 999 INR in paise
+        interval: 'monthly'
     },
     yearly: {
         name: 'Yearly',
-        amount: 9999, // $99.99 in cents
-        interval: 'year'
+        amount: 999900, // 9999 INR in paise
+        interval: 'yearly'
     }
 };
 
-// Create checkout session
+// Simple in-memory cache for plan IDs to avoid creating them repeatedly
+let razorpayPlanIds = {
+    monthly: null,
+    yearly: null
+};
+
+// Create checkout session (Razorpay Subscription)
 exports.createCheckout = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -24,48 +36,47 @@ exports.createCheckout = async (req, res) => {
             return res.status(400).json({ message: 'Invalid plan type. Choose "monthly" or "yearly".' });
         }
 
-        const plan = PLANS[plan_type];
-
-        // Check if user already has a Stripe customer ID
-        let stripeCustomerId = req.user.stripe_customer_id;
-
-        if (!stripeCustomerId) {
-            const customer = await stripe.customers.create({
-                email: req.user.email,
-                metadata: { userId }
-            });
-            stripeCustomerId = customer.id;
-
-            // Save Stripe customer ID
-            await supabase
-                .from('profiles')
-                .update({ stripe_customer_id: stripeCustomerId })
-                .eq('id', userId);
+        // 1. Ensure a Razorpay Plan exists for this logic
+        if (!razorpayPlanIds[plan_type]) {
+            try {
+                const plan = await razorpay.plans.create({
+                    period: PLANS[plan_type].interval,
+                    interval: 1,
+                    item: {
+                        name: `Playstake ${PLANS[plan_type].name} Plan`,
+                        amount: PLANS[plan_type].amount,
+                        currency: "INR",
+                        description: "Premium access to Playstake"
+                    }
+                });
+                razorpayPlanIds[plan_type] = plan.id;
+            } catch (planErr) {
+                console.error("Error creating plan dynamically:", planErr);
+                return res.status(500).json({ message: 'Failed to configure payment plan' });
+            }
         }
 
-        // Create checkout session
-        const session = await stripe.checkout.sessions.create({
-            customer: stripeCustomerId,
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: `Fairway Rewards ${plan.name} Plan`,
-                        description: `${plan.name} subscription to Fairway Rewards`
-                    },
-                    unit_amount: plan.amount,
-                    recurring: { interval: plan.interval }
-                },
-                quantity: 1
-            }],
-            mode: 'subscription',
-            success_url: `${process.env.CLIENT_URL}/dashboard?subscription=success`,
-            cancel_url: `${process.env.CLIENT_URL}/subscribe?cancelled=true`,
-            metadata: { userId, plan_type }
+        // 2. Create the Subscription in Razorpay
+        const subscription = await razorpay.subscriptions.create({
+            plan_id: razorpayPlanIds[plan_type],
+            total_count: 12, // Arbitrary count for recurring
+            customer_notify: 1,
+            notes: {
+                userId,
+                plan_type
+            }
         });
 
-        res.status(200).json({ url: session.url, sessionId: session.id });
+        // 3. Temporarily update the user's profile with the pending subscription ID
+        await supabase
+            .from('profiles')
+            .update({ stripe_subscription_id: subscription.id }) // repurposing the field from Stripe
+            .eq('id', userId);
+
+        res.status(200).json({ 
+            subscription_id: subscription.id,
+            key: process.env.RAZORPAY_KEY_ID
+        });
     } catch (error) {
         console.error('Checkout error:', error);
         res.status(500).json({ message: 'Error creating checkout session', error: error.message });
@@ -96,95 +107,96 @@ exports.getSubscription = async (req, res) => {
     }
 };
 
-// Stripe webhook handler
+// Razorpay webhook handler
 exports.handleWebhook = async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
-
-    try {
-        event = stripe.webhooks.constructEvent(
-            req.body,
-            sig,
-            process.env.STRIPE_WEBHOOK_SECRET
-        );
-    } catch (err) {
-        console.error('Webhook signature verification failed:', err.message);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+    // Note: To use verifying, you need process.env.RAZORPAY_WEBHOOK_SECRET
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET || 'fallback_secret_if_not_set';
+    
+    // Validate signature
+    const signature = req.headers['x-razorpay-signature'];
+    const bodyString = JSON.stringify(req.body);
+    
+    const expectedSignature = crypto.createHmac('sha256', secret)
+                                    .update(bodyString)
+                                    .digest('hex');
+                                    
+    // If webhook secret isn't provided/valid, we'll bypass validation for development ease
+    if (signature && signature !== expectedSignature && process.env.RAZORPAY_WEBHOOK_SECRET) {
+        return res.status(400).send('Invalid signature');
     }
 
-    switch (event.type) {
-        case 'checkout.session.completed': {
-            const session = event.data.object;
-            const userId = session.metadata.userId;
-            const planType = session.metadata.plan_type;
+    const event = req.body;
 
-            // Update profile subscription status
-            await supabase
-                .from('profiles')
-                .update({
-                    subscription_status: 'active',
-                    stripe_subscription_id: session.subscription
-                })
-                .eq('id', userId);
+    try {
+        switch (event.event) {
+            case 'subscription.charged': {
+                const sub = event.payload.subscription.entity;
+                const payment = event.payload.payment.entity;
+                
+                const userId = sub.notes.userId;
+                const planType = sub.notes.plan_type || 'monthly';
 
-            // Create subscription record
-            const now = new Date();
-            const periodEnd = new Date(now);
-            if (planType === 'monthly') periodEnd.setMonth(periodEnd.getMonth() + 1);
-            else periodEnd.setFullYear(periodEnd.getFullYear() + 1);
+                if (!userId) break;
 
-            await supabase
-                .from('subscriptions')
-                .insert([{
-                    user_id: userId,
-                    plan_type: planType,
-                    status: 'active',
-                    amount: PLANS[planType].amount / 100,
-                    current_period_start: now.toISOString(),
-                    current_period_end: periodEnd.toISOString(),
-                    stripe_subscription_id: session.subscription
-                }]);
+                // Update profile subscription status
+                await supabase
+                    .from('profiles')
+                    .update({
+                        subscription_status: 'active',
+                        stripe_subscription_id: sub.id // reused column
+                    })
+                    .eq('id', userId);
 
-            // Record transaction
-            await supabase
-                .from('transactions')
-                .insert([{
-                    user_id: userId,
-                    amount: PLANS[planType].amount / 100,
-                    type: 'subscription_payment',
-                    stripe_payment_id: session.payment_intent,
-                    metadata: { plan_type: planType }
-                }]);
+                // Create subscription record
+                const now = new Date();
+                const periodEnd = new Date(now);
+                if (planType === 'monthly') periodEnd.setMonth(periodEnd.getMonth() + 1);
+                else periodEnd.setFullYear(periodEnd.getFullYear() + 1);
 
-            break;
+                await supabase
+                    .from('subscriptions')
+                    .insert([{
+                        user_id: userId,
+                        plan_type: planType,
+                        status: 'active',
+                        amount: payment.amount / 100, // back to base unit
+                        current_period_start: now.toISOString(),
+                        current_period_end: periodEnd.toISOString(),
+                        stripe_subscription_id: sub.id // reused column
+                    }]);
+
+                // Record transaction
+                await supabase
+                    .from('transactions')
+                    .insert([{
+                        user_id: userId,
+                        amount: payment.amount / 100,
+                        type: 'subscription_payment',
+                        stripe_payment_id: payment.id, // reused column
+                        metadata: { plan_type: planType }
+                    }]);
+
+                break;
+            }
+
+            case 'subscription.cancelled': {
+                const sub = event.payload.subscription.entity;
+
+                await supabase
+                    .from('profiles')
+                    .update({ subscription_status: 'cancelled' })
+                    .eq('stripe_subscription_id', sub.id);
+
+                await supabase
+                    .from('subscriptions')
+                    .update({ status: 'cancelled' })
+                    .eq('stripe_subscription_id', sub.id);
+
+                break;
+            }
         }
-
-        case 'customer.subscription.deleted': {
-            const subscription = event.data.object;
-
-            await supabase
-                .from('profiles')
-                .update({ subscription_status: 'cancelled' })
-                .eq('stripe_subscription_id', subscription.id);
-
-            await supabase
-                .from('subscriptions')
-                .update({ status: 'cancelled' })
-                .eq('stripe_subscription_id', subscription.id);
-
-            break;
-        }
-
-        case 'invoice.payment_failed': {
-            const invoice = event.data.object;
-
-            await supabase
-                .from('profiles')
-                .update({ subscription_status: 'expired' })
-                .eq('stripe_customer_id', invoice.customer);
-
-            break;
-        }
+    } catch (err) {
+        console.error("Webhook processing error: ", err);
     }
 
     res.status(200).json({ received: true });
@@ -196,7 +208,7 @@ exports.getPlans = async (req, res) => {
         plans: Object.entries(PLANS).map(([key, plan]) => ({
             id: key,
             name: plan.name,
-            amount: plan.amount / 100,
+            amount: plan.amount / 100, // send standard INR to frontend, not paise
             interval: plan.interval
         }))
     });

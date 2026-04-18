@@ -30,7 +30,7 @@ const Navbar = () => {
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
       <div className="logo">
-        <Link to="/">Fairway Rewards</Link>
+        <Link to="/">Playstake</Link>
       </div>
       <div className="nav-links">
         {isAuthenticated ? (
@@ -283,7 +283,7 @@ const Home = () => {
       {/* How it Works Section */}
       <section className="features-section" id="how-it-works">
         <div className="section-title">
-          <h2>The Fairway Flow</h2>
+          <h2>The Playstake Flow</h2>
           <p>Three simple steps to elevate your game and your impact.</p>
         </div>
         <div className="features-grid">
@@ -346,7 +346,7 @@ const Home = () => {
       <section className="page" id="faq" style={{background: '#fff', borderRadius: '40px'}}>
         <div className="section-title">
           <h2>Frequently Asked Questions</h2>
-          <p>Everything you need to know about Fairway Rewards.</p>
+          <p>Everything you need to know about Playstake.</p>
         </div>
         <FAQSection />
       </section>
@@ -363,7 +363,7 @@ const Home = () => {
       <footer className="footer">
         <div className="footer-grid">
           <div className="footer-col">
-            <h5 style={{fontSize: '1.5rem', fontWeight: '800', marginBottom: '1rem'}}>FAIRWAY REWARDS</h5>
+            <h5 style={{fontSize: '1.5rem', fontWeight: '800', marginBottom: '1rem'}}>PLAYSTAKE</h5>
             <p style={{opacity: 0.6, fontSize: '0.9rem'}}>Transforming the game of golf into a modern engine for social impact and reward.</p>
           </div>
           <div className="footer-col">
@@ -386,13 +386,13 @@ const Home = () => {
           <div className="footer-col">
             <h5>Contact</h5>
             <ul>
-              <li>support@fairwayrewards.com</li>
+              <li>support@playstake.com</li>
               <li>Partner Inquiries</li>
               <li><Link to="/admin" style={{color: 'rgba(255,255,255,0.3)'}}>Admin Access</Link></li>
             </ul>
           </div>
         </div>
-        <div className="footer-bottom"><p>&copy; 2026 Fairway Rewards. Play responsibly.</p></div>
+        <div className="footer-bottom"><p>&copy; 2026 Playstake. Play responsibly.</p></div>
       </footer>
     </div>
   );

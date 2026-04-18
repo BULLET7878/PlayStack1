@@ -1,6 +1,6 @@
-# 🏌️‍♂️ Fairway Rewards: Frontend
+# 🏌️‍♂️ Playstake: Frontend
 
-This is the React-based frontend for the Fairway Rewards platform. It provides a cinematic, high-performance experience for tracking golf scores and participating in charity-focused rewards.
+This is the React-based frontend for the Playstake platform. It provides a cinematic, high-performance experience for tracking golf scores and participating in charity-focused rewards.
 
 ## 🛠️ Tech Stack
 - **Framework**: React (Vite)

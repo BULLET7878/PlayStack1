@@ -1,22 +1,30 @@
 :root {
-  --bg-main: #f8f9fa;
-  --bg-card: #ffffff;
+  /* Dark Premium Theme Palette */
+  --bg-main: #0B0E14; /* Deep charcoal/almost black */
+  --bg-card: rgba(20, 25, 33, 0.6); /* Translucent dark cards for glass effect */
   
-  /* Golf Theme Pallete */
-  --primary: #1e6030; /* Deep Fairway Green */
-  --primary-hover: #144621;
-  --secondary: #d4c4a8; /* Sand Trap Beige */
-  --accent: #28a745; /* Bright grass green */
+  /* Golf Theme Palette Modernized */
+  --primary: #2ECC71; /* Vibrant bright electric green */
+  --primary-hover: #27AE60;
+  --secondary: #EAB543; /* Gold accent for premium feel */
+  --accent: #1ABC9C; /* Cyan twist on green */
   
   /* Text */
-  --text-main: #212529;
-  --text-muted: #6c757d;
+  --text-main: #FFFFFF;
+  --text-muted: #9BA4B5;
   
-  /* Structural */
-  --border-light: #e9ecef;
-  --shadow-soft: 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-hover: 0 8px 16px rgba(0,0,0,0.1);
+  /* Structural and Glassmorphism */
+  --border-light: rgba(255, 255, 255, 0.08);
+  --border-focus: rgba(46, 204, 113, 0.5);
+  --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --shadow-hover: 0 12px 40px 0 rgba(46, 204, 113, 0.15);
+  --shadow-glow: 0 0 20px rgba(46, 204, 113, 0.3);
+  --glass-blur: blur(16px);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  
+  /* Fonts */
   --font-main: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Outfit', -apple-system, sans-serif;
 }
 
 * {
@@ -27,18 +35,37 @@
 
 body {
   background-color: var(--bg-main);
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(46, 204, 113, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 85% 30%, rgba(26, 188, 156, 0.08) 0%, transparent 50%);
   color: var(--text-main);
   font-family: var(--font-main);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  min-height: 100vh;
 }
 
 a {
   text-decoration: none;
   color: inherit;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--primary);
 }
 
 ul {
   list-style: none;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
 }
