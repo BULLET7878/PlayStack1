@@ -1,0 +1,44 @@
+:root {
+  --bg-main: #f8f9fa;
+  --bg-card: #ffffff;
+  
+  /* Golf Theme Pallete */
+  --primary: #1e6030; /* Deep Fairway Green */
+  --primary-hover: #144621;
+  --secondary: #d4c4a8; /* Sand Trap Beige */
+  --accent: #28a745; /* Bright grass green */
+  
+  /* Text */
+  --text-main: #212529;
+  --text-muted: #6c757d;
+  
+  /* Structural */
+  --border-light: #e9ecef;
+  --shadow-soft: 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-hover: 0 8px 16px rgba(0,0,0,0.1);
+  --font-main: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--font-main);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
