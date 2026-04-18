@@ -1,16 +1,22 @@
-# React + Vite
+# 🏌️‍♂️ Fairway Rewards: Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This is the React-based frontend for the Fairway Rewards platform. It provides a cinematic, high-performance experience for tracking golf scores and participating in charity-focused rewards.
 
-Currently, two official plugins are available:
+## 🛠️ Tech Stack
+- **Framework**: React (Vite)
+- **Animations**: Framer Motion
+- **Icons**: Lucide-React
+- **Styling**: Vanilla CSS (Premium Golf Aesthetic)
+- **API Client**: Axios
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🚀 Key Modules
+- **Auth Provider**: Custom context for secure session management.
+- **Dynamic Leaderboard**: Real-time display of top impact players.
+- **Draw Countdown**: Visual timer for the monthly algorithmic draw.
+- **Interactive FAQ**: Accordion-based rule explanation.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 📦 Setup & Development
+1. Configure \`src/services/api.js\` to point to your backend.
+2. Install dependencies: \`npm install\`.
+3. Start development: \`npm run dev\`.
+4. Build for production: \`npm run build\`.
